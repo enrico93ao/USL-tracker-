@@ -3,71 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USL Tracker</title>
+    <title>USL Tracker Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }
+                }
+            }
         }
     </script>
     <style>
-        body { background-color: #f5f5f7; }
-        .apple-card { background: #ffffff; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-        .dark .apple-card { background: #1c1c1e; box-shadow: none; }
-        input, button { transition: all 0.2s ease; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .dark .glass-card { background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(51, 65, 85, 0.8); }
+        button, input, select { min-height: 48px; }
     </style>
 </head>
-<body class="text-slate-900 dark:text-slate-100 min-h-screen">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
 
-    <main class="max-w-md mx-auto px-4 py-8 space-y-6">
-        <header class="mb-6">
-            <h1 class="text-2xl font-bold tracking-tight">USL Pro</h1>
-            <p class="text-slate-500 text-sm">Resoconto attività</p>
+    <main class="max-w-xl mx-auto px-4 py-6 space-y-6">
+        <header class="flex items-center justify-between pb-2">
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">USL Tracker Pro</h1>
+                <p class="text-xs text-slate-500">Gestione presenze e fatturato</p>
+            </div>
+            <button onclick="document.documentElement.classList.toggle('dark')" class="w-11 h-11 rounded-2xl bg-slate-200/80 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:inline text-amber-400"></i>
+            </button>
         </header>
 
         <!-- KPI Cards -->
-        <div class="grid grid-cols-2 gap-4">
-            <div class="apple-card p-5">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Fatturato Mese</p>
-                <p class="text-xl font-bold mt-1" id="kpiMonthAmount">€ 0</p>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="glass-card p-3 rounded-2xl shadow-sm">
+                <p class="text-[10px] font-semibold text-slate-500 uppercase">Ore Mese</p>
+                <p class="text-lg font-black mt-1 text-slate-800 dark:text-white" id="kpiMonthHours">0.00</p>
             </div>
-            <div class="apple-card p-5">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Residuo Fondo</p>
-                <p class="text-xl font-bold mt-1 text-blue-600" id="kpiRemainingFunds">€ 0</p>
+            <div class="glass-card p-3 rounded-2xl shadow-sm">
+                <p class="text-[10px] font-semibold text-slate-500 uppercase">Fattura</p>
+                <p class="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400" id="kpiMonthAmount">€ 0</p>
+            </div>
+            <div class="glass-card p-3 rounded-2xl shadow-sm">
+                <p class="text-[10px] font-semibold text-slate-500 uppercase">Residuo</p>
+                <p class="text-lg font-black mt-1 text-indigo-600 dark:text-indigo-400" id="kpiRemainingFunds">€ 37.398</p>
             </div>
         </div>
 
-        <!-- Form Inserimento -->
-        <div class="apple-card p-5 space-y-4">
+        <!-- Chart Section -->
+        <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
             <div class="flex items-center justify-between">
-                <h3 class="font-semibold text-sm">Nuova Registrazione</h3>
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm">Andamento Fatturato</h3>
+                <select id="chartFilter" onchange="renderAll()" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 text-xs font-semibold focus:outline-none">
+                    <option value="all">Tutto lo storico</option>
+                    <option value="current">Mese Corrente</option>
+                </select>
             </div>
-            <input type="date" id="inputDate" class="w-full bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-3 text-sm border-none focus:ring-2 focus:ring-blue-500">
-            
-            <div class="grid grid-cols-2 gap-3">
-                <input type="number" id="inputDirectHours" placeholder="Ore" class="bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-3 text-sm border-none focus:ring-2 focus:ring-blue-500">
-                <input type="number" id="inputDirectMinutes" placeholder="Minuti" class="bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-3 text-sm border-none focus:ring-2 focus:ring-blue-500">
+            <div class="h-60 w-full relative">
+                <canvas id="monthlyChart"></canvas>
             </div>
-            <button onclick="addDirectHours()" class="w-full bg-slate-900 dark:bg-white text-white dark:text-black font-semibold py-3 rounded-xl hover:opacity-90 active:scale-95 transition-all">
-                Aggiungi Dati
-            </button>
         </div>
 
-        <!-- Lista -->
-        <div class="apple-card p-5">
-            <h3 class="font-semibold text-sm mb-4">Storico Recente</h3>
-            <div id="entriesList" class="space-y-3"></div>
+        <!-- Entry Form -->
+        <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm">Registrazione Turni / Ore</h3>
+                <span id="activeClockStatus" class="text-xs font-semibold px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500">Pronto</span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Data</label>
+                <input type="date" id="inputDate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="recordIn()" id="btnIngresso" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Ingresso</span>
+                </button>
+                <button onclick="recordOut()" id="btnUscita" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2 opacity-60 cursor-not-allowed" disabled>
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Uscita</span>
+                </button>
+            </div>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                <span class="flex-shrink mx-4 text-xs text-slate-400 uppercase font-semibold">oppure totale rapido</span>
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+            </div>
+
+            <!-- Inserimento diretto ore/minuti -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Ore</label>
+                        <input type="number" id="inputDirectHours" min="0" placeholder="0" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Minuti</label>
+                        <input type="number" id="inputDirectMinutes" min="0" max="59" placeholder="0" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
+                    </div>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="addDirectHours()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Aggiungi</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storico Registrazioni -->
+        <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm">Registrazioni Mese</h3>
+                <input type="month" id="filterMonth" onchange="renderAll()" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 text-xs font-semibold focus:outline-none">
+            </div>
+            <div id="entriesList" class="space-y-2 text-sm max-h-60 overflow-y-auto pr-1"></div>
         </div>
     </main>
 
     <script>
         let entries = JSON.parse(localStorage.getItem('usl_pro_entries')) || [];
+        let activeShift = JSON.parse(localStorage.getItem('usl_active_shift')) || null;
         const hourlyRate = 40.0;
-        const totalInitialBudget = 37398.00;
+        let initialFunds = 37398.0;
+
         const historicalInvoices = [
             { ym: '2025-05', amount: 84.67 }, { ym: '2025-06', amount: 2888.00 }, { ym: '2025-07', amount: 3520.67 },
             { ym: '2025-08', amount: 3860.67 }, { ym: '2025-09', amount: 4454.67 }, { ym: '2025-10', amount: 3985.33 },
@@ -77,19 +143,57 @@
         ];
 
         document.getElementById('inputDate').valueAsDate = new Date();
+        document.getElementById('filterMonth').value = new Date().toISOString().slice(0, 7);
+        let chartInstance = null;
 
-        function calculateStats() {
-            const historicalTotal = historicalInvoices.reduce((sum, item) => sum + item.amount, 0);
-            const appTotal = entries.reduce((acc, curr) => acc + (curr.hours * hourlyRate), 0);
-            const totalBilled = historicalTotal + appTotal;
-            const remaining = totalInitialBudget - totalBilled;
-            
-            const currentMonthYM = new Date().toISOString().slice(0, 7);
-            const monthEntries = entries.filter(e => e.date.startsWith(currentMonthYM));
-            const monthAppAmount = monthEntries.reduce((sum, e) => sum + (e.hours * hourlyRate), 0);
-            const monthHistAmount = historicalInvoices.find(h => h.ym === currentMonthYM)?.amount || 0;
+        function updateShiftUI() {
+            const btnIn = document.getElementById('btnIngresso');
+            const btnOut = document.getElementById('btnUscita');
+            const status = document.getElementById('activeClockStatus');
 
-            return { remaining, monthAmount: monthAppAmount + monthHistAmount };
+            if (activeShift) {
+                btnIn.disabled = true;
+                btnIn.classList.add('opacity-60', 'cursor-not-allowed');
+                btnOut.disabled = false;
+                btnOut.classList.remove('opacity-60', 'cursor-not-allowed');
+                status.innerText = `In servizio dalle ${activeShift.timeIn}`;
+                status.className = "text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 rounded-lg";
+            } else {
+                btnIn.disabled = false;
+                btnIn.classList.remove('opacity-60', 'cursor-not-allowed');
+                btnOut.disabled = true;
+                btnOut.classList.add('opacity-60', 'cursor-not-allowed');
+                status.innerText = "Pronto";
+                status.className = "text-xs font-semibold px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500";
+            }
+        }
+
+        function recordIn() {
+            const date = document.getElementById('inputDate').value;
+            const now = new Date();
+            const timeIn = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            activeShift = { date, timeIn };
+            localStorage.setItem('usl_active_shift', JSON.stringify(activeShift));
+            updateShiftUI();
+        }
+
+        function recordOut() {
+            if (!activeShift) return;
+            const now = new Date();
+            const timeOut = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const [hIn, mIn] = activeShift.timeIn.split(':').map(Number);
+            const [hOut, mOut] = timeOut.split(':').map(Number);
+            const diffHours = ((hOut * 60 + mOut) - (hIn * 60 + mIn)) / 60;
+
+            if (diffHours <= 0) { alert("Orario non valido."); return; }
+
+            entries.push({ id: Date.now(), date: activeShift.date, label: `${activeShift.timeIn} - ${timeOut}`, hours: diffHours });
+            entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
+            activeShift = null;
+            localStorage.removeItem('usl_active_shift');
+            updateShiftUI();
+            renderAll();
         }
 
         function addDirectHours() {
@@ -98,36 +202,75 @@
             const minutes = parseInt(document.getElementById('inputDirectMinutes').value) || 0;
             const totalHours = hours + (minutes / 60);
 
-            if (!date || totalHours <= 0) return alert("Inserisci dati validi");
+            if (!date || totalHours <= 0) { alert("Inserisci ore e minuti validi."); return; }
 
-            entries.push({ id: Date.now(), date, hours: totalHours });
+            entries.push({ id: Date.now(), date, label: `Blocco Ore`, hours: totalHours });
+            entries.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
-            render();
+            document.getElementById('inputDirectHours').value = '';
+            document.getElementById('inputDirectMinutes').value = '';
+            renderAll();
         }
 
         function deleteEntry(id) {
             entries = entries.filter(e => e.id !== id);
             localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
-            render();
+            renderAll();
         }
 
-        function render() {
-            const { remaining, monthAmount } = calculateStats();
-            document.getElementById('kpiMonthAmount').innerText = `€ ${monthAmount.toLocaleString('it-IT', {maximumFractionDigits: 0})}`;
+        function renderAll() {
+            const selectedMonth = document.getElementById('filterMonth').value;
+            const listContainer = document.getElementById('entriesList');
+            listContainer.innerHTML = '';
+            let totalMonthHours = 0;
+
+            entries.forEach(e => {
+                if (e.date.startsWith(new Date().toISOString().slice(0, 7))) totalMonthHours += e.hours;
+            });
+
+            let filteredEntries = entries.filter(e => e.date.startsWith(selectedMonth));
+            let totalUserBilled = entries.reduce((acc, curr) => acc + (curr.hours * hourlyRate), 0);
+            let remaining = initialFunds - totalUserBilled;
+
+            if (filteredEntries.length === 0) {
+                listContainer.innerHTML = `<p class="text-slate-400 text-center py-3 text-xs">Nessuna registrazione</p>`;
+            } else {
+                filteredEntries.forEach(e => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800";
+                    div.innerHTML = `<div><p class="font-semibold text-slate-800 dark:text-slate-200">${e.date} &bull; <span class="text-blue-600">${e.label}</span></p><p class="text-xs text-slate-500">${e.hours.toFixed(2)} ore (€ ${(e.hours * hourlyRate).toFixed(2)})</p></div><button onclick="deleteEntry(${e.id})" class="text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>`;
+                    listContainer.appendChild(div);
+                });
+            }
+
+            document.getElementById('kpiMonthHours').innerHTML = `${totalMonthHours.toFixed(2)}`;
+            document.getElementById('kpiMonthAmount').innerText = `€ ${(totalMonthHours * hourlyRate).toLocaleString('it-IT', {maximumFractionDigits: 0})}`;
             document.getElementById('kpiRemainingFunds').innerText = `€ ${remaining.toLocaleString('it-IT', {maximumFractionDigits: 0})}`;
-            
-            const list = document.getElementById('entriesList');
-            list.innerHTML = entries.slice().reverse().map(e => `
-                <div class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
-                    <div>
-                        <p class="text-sm font-medium">${e.date}</p>
-                        <p class="text-xs text-slate-400">${e.hours.toFixed(2)} ore</p>
-                    </div>
-                    <button onclick="deleteEntry(${e.id})" class="text-rose-500 text-xs">Elimina</button>
-                </div>
-            `).join('');
+            renderChart();
         }
-        render();
+
+        function renderChart() {
+            const filter = document.getElementById('chartFilter').value;
+            const currentMonthYM = new Date().toISOString().slice(0, 7);
+            let mapAmounts = {};
+            historicalInvoices.forEach(h => { mapAmounts[h.ym] = h.amount; });
+            entries.forEach(e => { const ym = e.date.slice(0, 7); if (!mapAmounts[ym]) mapAmounts[ym] = 0; mapAmounts[ym] += e.hours * hourlyRate; });
+            
+            let allYMs = Object.keys(mapAmounts).sort();
+            if (filter === 'current') allYMs = allYMs.filter(ym => ym === currentMonthYM);
+            
+            const labels = allYMs.map(ym => { const [y, m] = ym.split('-'); return new Date(y, m - 1, 1).toLocaleDateString('it-IT', { month: 'short', year: '2-digit' }); });
+            const dataValues = allYMs.map(ym => mapAmounts[ym]);
+
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ data: dataValues, backgroundColor: 'rgba(37, 99, 235, 0.85)', borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+            });
+        }
+        updateShiftUI(); renderAll();
     </script>
 </body>
 </html>
