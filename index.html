@@ -68,25 +68,48 @@
             </div>
         </div>
 
-        <!-- Entry Form (Ingresso / Uscita Separati) -->
+        <!-- Entry Form (Ingresso/Uscita + Inserimento Totale Ore Mensili) -->
         <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
             <div class="flex items-center justify-between">
-                <h3 class="font-bold text-slate-800 dark:text-white text-sm">Timbratura Turno</h3>
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm">Registrazione Turni / Ore</h3>
                 <span id="activeClockStatus" class="text-xs font-semibold px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500">Pronto</span>
             </div>
+
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Data</label>
                 <input type="date" id="inputDate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
             </div>
+
+            <!-- Pulsanti Ingresso / Uscita Rapidi -->
             <div class="grid grid-cols-2 gap-4">
                 <button onclick="recordIn()" id="btnIngresso" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-right-to-bracket"></i>
-                    <span>Registra Ingresso</span>
+                    <span>Ingresso</span>
                 </button>
                 <button onclick="recordOut()" id="btnUscita" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2 opacity-60 cursor-not-allowed" disabled>
                     <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Registra Uscita</span>
+                    <span>Uscita</span>
                 </button>
+            </div>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                <span class="flex-shrink mx-4 text-xs text-slate-400 uppercase font-semibold">oppure totale rapido</span>
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+            </div>
+
+            <!-- Inserimento diretto totale ore (es. mensile o blocco) -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Totale Ore</label>
+                    <input type="number" step="0.5" id="inputTotalHours" placeholder="Es. 80" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="addDirectHours()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Aggiungi Ore</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -166,13 +189,29 @@
                 return;
             }
 
-            entries.push({ id: Date.now(), date: activeShift.date, timeIn: activeShift.timeIn, timeOut, hours: diffHours });
+            entries.push({ id: Date.now(), date: activeShift.date, label: `${activeShift.timeIn} - ${timeOut}`, hours: diffHours });
             entries.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
 
             activeShift = null;
             localStorage.removeItem('usl_active_shift');
             updateShiftUI();
+            renderAll();
+        }
+
+        function addDirectHours() {
+            const date = document.getElementById('inputDate').value;
+            const hoursVal = parseFloat(document.getElementById('inputTotalHours').value);
+
+            if (!date || isNaN(hoursVal) || hoursVal <= 0) {
+                alert("Inserisci una data valida e un numero di ore maggiore di zero.");
+                return;
+            }
+
+            entries.push({ id: Date.now(), date, label: `Blocco Ore`, hours: hoursVal });
+            entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
+            document.getElementById('inputTotalHours').value = '';
             renderAll();
         }
 
@@ -185,9 +224,6 @@
         function renderAll() {
             const selectedMonth = document.getElementById('filterMonth').value;
             let totalMonthHours = 0;
-            let totalHistoricalBilled = 0;
-
-            historicalInvoices.forEach(h => { totalHistoricalBilled += h.amount; });
 
             const listContainer = document.getElementById('entriesList');
             listContainer.innerHTML = '';
@@ -200,7 +236,6 @@
                 }
             });
 
-            // Calcolo totale fatturato attuale per il residuo
             let totalUserBilled = entries.reduce((acc, curr) => acc + (curr.hours * hourlyRate), 0);
             let remaining = initialFunds - totalUserBilled;
 
@@ -212,7 +247,7 @@
                     div.className = "flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800";
                     div.innerHTML = `
                         <div>
-                            <p class="font-semibold text-slate-800 dark:text-slate-200">${e.date} &bull; <span class="text-blue-600">${e.timeIn} - ${e.timeOut}</span></p>
+                            <p class="font-semibold text-slate-800 dark:text-slate-200">${e.date} &bull; <span class="text-blue-600">${e.label}</span></p>
                             <p class="text-xs text-slate-500">${e.hours.toFixed(2)} ore (€ ${(e.hours * hourlyRate).toFixed(2)})</p>
                         </div>
                         <button onclick="deleteEntry(${e.id})" class="text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>
