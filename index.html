@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USL Billing & Time Tracker Pro</title>
+    <title>USL Tracker Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,753 +13,227 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }
                 }
             }
         }
     </script>
     <style>
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
-        .dark .glass-card {
-            background: rgba(30, 41, 59, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(51, 65, 85, 0.8);
-        }
-        @keyframes pulse-subtle {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.02); }
-        }
-        .animate-pulse-subtle {
-            animation: pulse-subtle 3s infinite ease-in-out;
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .dark .glass-card { background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(51, 65, 85, 0.8); }
+        button, input, select { min-height: 48px; } /* Ottimizzato per touch mobile */
     </style>
 </head>
-<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
 
-    <div class="min-h-full flex flex-col">
-        <!-- Header -->
-        <header class="sticky top-0 z-30 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                        <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">USL Tracker Pro</h1>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Gestione Fatturazione & Timbratura GPS</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Cambia tema">
-                        <i class="fa-solid fa-moon dark:hidden"></i>
-                        <i class="fa-solid fa-sun hidden dark:inline text-amber-400"></i>
-                    </button>
-                    <button onclick="openSettingsModal()" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Impostazioni">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
-                </div>
+    <main class="max-w-xl mx-auto px-4 py-6 space-y-6">
+        <header class="flex items-center justify-between pb-2">
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">USL Tracker Pro</h1>
+                <p class="text-xs text-slate-500">Gestione presenze e fatturato</p>
             </div>
+            <button onclick="document.documentElement.classList.toggle('dark')" class="w-11 h-11 rounded-2xl bg-slate-200/80 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:inline text-amber-400"></i>
+            </button>
         </header>
 
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            
-            <!-- KPI Dashboard -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <div class="glass-card rounded-2xl p-6 shadow-sm relative overflow-hidden">
-                    <div class="absolute right-4 top-4 text-blue-500/10 dark:text-blue-400/10 text-5xl">
-                        <i class="fa-solid fa-clock"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Ore Mese Corrente</p>
-                    <h3 class="text-3xl font-extrabold mt-2 text-slate-800 dark:text-white" id="kpiMonthHours">0.00 <span class="text-sm font-normal text-slate-500">h</span></h3>
-                    <div class="mt-3 flex items-center text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                        <i class="fa-solid fa-arrow-trend-up mr-1"></i> Turni registrati attivi
-                    </div>
-                </div>
-
-                <div class="glass-card rounded-2xl p-6 shadow-sm relative overflow-hidden">
-                    <div class="absolute right-4 top-4 text-emerald-500/10 dark:text-emerald-400/10 text-5xl">
-                        <i class="fa-solid fa-euro-sign"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Fattura Stimata Mese</p>
-                    <h3 class="text-3xl font-extrabold mt-2 text-emerald-600 dark:text-emerald-400" id="kpiMonthAmount">€ 0.00</h3>
-                    <div class="mt-3 text-xs text-slate-500 dark:text-slate-400" id="kpiRateDisplay">Tariffa: 40.00 €/h</div>
-                </div>
-
-                <div class="glass-card rounded-2xl p-6 shadow-sm relative overflow-hidden">
-                    <div class="absolute right-4 top-4 text-indigo-500/10 dark:text-indigo-400/10 text-5xl">
-                        <i class="fa-solid fa-wallet"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Residuo Fondi Stimato</p>
-                    <h3 class="text-3xl font-extrabold mt-2 text-indigo-600 dark:text-indigo-400" id="kpiRemainingFunds">€ 37,398</h3>
-                    <div class="mt-3 text-xs text-slate-500 dark:text-slate-400">Aggiornato da storico USL</div>
-                </div>
-
-                <div class="glass-card rounded-2xl p-6 shadow-sm relative overflow-hidden">
-                    <div class="absolute right-4 top-4 text-amber-500/10 dark:text-amber-400/10 text-5xl">
-                        <i class="fa-solid fa-hourglass-half"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Autonomia Prevista</p>
-                    <h3 class="text-3xl font-extrabold mt-2 text-amber-600 dark:text-amber-400" id="kpiMonthsLeft">~10.2 <span class="text-sm font-normal text-slate-500">mesi</span></h3>
-                    <div class="mt-3 text-xs text-amber-600 dark:text-amber-400 font-semibold" id="kpiExhaustionTarget">Scadenza prevista</div>
-                </div>
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="glass-card p-4 rounded-2xl shadow-sm">
+                <p class="text-xs font-semibold text-slate-500 uppercase">Ore Mese</p>
+                <p class="text-2xl font-black mt-1 text-slate-800 dark:text-white" id="kpiMonthHours">0.00 <span class="text-xs font-normal">h</span></p>
             </div>
-
-            <!-- NEW: Live Geofencing & Smart Check-in Banner -->
-            <div class="glass-card rounded-2xl p-6 shadow-sm bg-gradient-to-r from-blue-900/10 via-indigo-900/5 to-transparent border-blue-500/30">
-                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                    <div class="flex items-start space-x-4">
-                        <div id="gpsStatusIcon" class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xl shadow-inner shrink-0 transition">
-                            <i class="fa-solid fa-location-crosshairs"></i>
-                        </div>
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Rilevamento Posizione Sede Lavoro (GPS)</h3>
-                                <span id="gpsBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">In attesa di posizione</span>
-                            </div>
-                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" id="gpsDescText">Configura la posizione dell'ospedale/sede USL per abilitare la timbratura automatica quando arrivi sul posto.</p>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-                        <button onclick="setCurrentAsWorkLocation()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-semibold text-sm transition flex items-center space-x-2">
-                            <i class="fa-solid fa-map-pin text-blue-600"></i>
-                            <span>Imposta qui Sede Lavoro</span>
-                        </button>
-                        <button id="toggleGpsTrackingBtn" onclick="toggleGpsTracking()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/25 transition flex items-center space-x-2">
-                            <i class="fa-solid fa-play"></i>
-                            <span>Avvia Radar GPS</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Chart -->
-                    <div class="glass-card rounded-2xl p-6 shadow-sm">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Andamento Mensile Ore & Fatturato</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400">Storico completo e mesi correnti</p>
-                            </div>
-                        </div>
-                        <div class="w-full" style="height: 320px; position: relative;">
-                            <canvas id="monthlyTrendChart" style="width: 100%; height: 100%;"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Timbratura Section -->
-                    <div class="glass-card rounded-2xl p-6 shadow-sm">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                            <div>
-                                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Registrazione Orari (Timbratura)</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400">Inserisci manualmente o registra con il GPS i turni giornalieri</p>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <label for="filterMonth" class="text-xs font-semibold text-slate-500">Mese:</label>
-                                <input type="month" id="filterMonth" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="renderEntries()">
-                            </div>
-                        </div>
-
-                        <!-- Form Inserimento Turno -->
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 bg-slate-100/60 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/80 mb-6">
-                            <div>
-                                <label for="inputDate" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Data</label>
-                                <input type="date" id="inputDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            </div>
-                            <div>
-                                <label for="inputTimeIn" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Ingresso</label>
-                                <input type="time" id="inputTimeIn" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value="09:00">
-                            </div>
-                            <div>
-                                <label for="inputTimeOut" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Uscita</label>
-                                <input type="time" id="inputTimeOut" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value="17:00">
-                            </div>
-                            <div class="flex items-end">
-                                <button onclick="addEntry()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md shadow-blue-500/20 transition flex items-center justify-center space-x-2">
-                                    <i class="fa-solid fa-plus"></i>
-                                    <span>Registra</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Tabella Turni -->
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                        <th class="py-3 px-4">Data</th>
-                                        <th class="py-3 px-4">Ingresso</th>
-                                        <th class="py-3 px-4">Uscita</th>
-                                        <th class="py-3 px-4">Ore Lavorate</th>
-                                        <th class="py-3 px-4 text-right">Azioni</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="entriesTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
-                                    <!-- Dynamic rows -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <!-- Calcolo Rapido -->
-                    <div class="glass-card rounded-2xl p-6 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Calcolo Rapido Fattura</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Simula un importo inserendo liberamente il monte ore</p>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label for="manualHoursInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Monte Ore (es. 85.5 o 85:30)</label>
-                                <input type="text" id="manualHoursInput" placeholder="Es. 92.5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" oninput="calculateManual()">
-                            </div>
-                            <div>
-                                <label for="manualRateInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tariffa Oraria (€)</label>
-                                <input type="number" id="manualRateInput" value="40.00" step="0.5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" oninput="calculateManual()">
-                            </div>
-
-                            <div class="p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl mt-6">
-                                <span class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Compenso Calcolato</span>
-                                <div class="text-2xl font-extrabold text-blue-700 dark:text-blue-300 mt-1" id="manualResultDisplay">€ 0.00</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Esportazione / Azioni Rapide -->
-                    <div class="glass-card rounded-2xl p-6 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Esporta Dati</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Scarica o condividi il riepilogo presenze</p>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="exportJSON()" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-download"></i>
-                                <span>Backup</span>
-                            </button>
-                            <button onclick="clearAllData()" class="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-trash-can"></i>
-                                <span>Reset</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
-        <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Impostazioni Fondo & GPS</h3>
-                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label="Chiudi impostazioni"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label for="settingRemaining" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Residuo Iniziale Fondi (€)</label>
-                    <input type="number" id="settingRemaining" value="37398" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="settingRate" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tariffa Oraria Standard (€)</label>
-                    <input type="number" id="settingRate" value="40.00" step="0.5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <div>
-                        <label for="settingLat" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Latitudine Sede</label>
-                        <input type="number" id="settingLat" step="0.0001" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label for="settingLng" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Longitudine Sede</label>
-                        <input type="number" id="settingLng" step="0.0001" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                </div>
-                <div>
-                    <label for="settingRadius" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Raggio Geofence (metri)</label>
-                    <input type="number" id="settingRadius" value="150" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3 pt-4">
-                <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-semibold hover:bg-slate-200 transition">Annulla</button>
-                <button onclick="saveSettings()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md transition">Salva Impostazioni</button>
+            <div class="glass-card p-4 rounded-2xl shadow-sm">
+                <p class="text-xs font-semibold text-slate-500 uppercase">Fattura Stimata</p>
+                <p class="text-2xl font-black mt-1 text-emerald-600 dark:text-emerald-400" id="kpiMonthAmount">€ 0.00</p>
             </div>
         </div>
-    </div>
 
-    <!-- Script Logica & Geofencing -->
+        <!-- Chart Section -->
+        <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm">Andamento Fatturato</h3>
+                <select id="chartFilter" onchange="renderAll()" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 text-xs font-semibold focus:outline-none">
+                    <option value="all">Tutto lo storico</option>
+                    <option value="current">Mese Corrente</option>
+                </select>
+            </div>
+            <div class="h-64 w-full relative">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Entry Form -->
+        <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-800 dark:text-white text-sm">Registra Turno</h3>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Data</label>
+                <input type="date" id="inputDate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Ingresso</label>
+                    <input type="time" id="inputTimeIn" value="09:00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Uscita</label>
+                    <input type="time" id="inputTimeOut" value="17:00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+            </div>
+            <button onclick="addEntry()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/25 transition">Registra Turno</button>
+        </div>
+
+        <!-- Elenco Turni Recenti -->
+        <div class="glass-card p-5 rounded-2xl shadow-sm space-y-3">
+            <h3 class="font-bold text-slate-800 dark:text-white text-sm">Ultime Registrazioni</h3>
+            <div id="entriesList" class="space-y-2 text-sm">
+                <!-- Popolato via JS -->
+            </div>
+        </div>
+    </main>
+
     <script>
-        // State management
-        let entries = JSON.parse(localStorage.getItem('usl_pro_entries')) || [
-            { id: 101, date: '2025-05-15', timeIn: '09:00', timeOut: '11:00', hours: 2.03 },
-            { id: 102, date: '2025-06-10', timeIn: '09:00', timeOut: '16:12', hours: 72.20 },
-            { id: 103, date: '2025-07-10', timeIn: '09:00', timeOut: '17:48', hours: 88.02 },
-            { id: 104, date: '2025-08-10', timeIn: '09:00', timeOut: '18:35', hours: 96.52 },
-            { id: 105, date: '2025-09-10', timeIn: '09:00', timeOut: '20:14', hours: 111.37 },
-            { id: 106, date: '2025-10-10', timeIn: '09:00', timeOut: '18:57', hours: 99.63 },
-            { id: 107, date: '2025-11-10', timeIn: '09:00', timeOut: '17:54', hours: 89.07 },
-            { id: 108, date: '2025-12-10', timeIn: '09:00', timeOut: '18:53', hours: 98.97 },
-            { id: 109, date: '2026-01-10', timeIn: '09:00', timeOut: '17:50', hours: 88.40 },
-            { id: 110, date: '2026-02-10', timeIn: '09:00', timeOut: '19:02', hours: 100.40 },
-            { id: 111, date: '2026-03-10', timeIn: '09:00', timeOut: '21:07', hours: 121.18 },
-            { id: 112, date: '2026-04-10', timeIn: '09:00', timeOut: '20:15', hours: 112.52 },
-            { id: 113, date: '2026-05-10', timeIn: '09:00', timeOut: '20:00', hours: 110.08 },
-            { id: 114, date: '2026-06-10', timeIn: '09:00', timeOut: '18:49', hours: 98.22 },
-            { id: 115, date: '2026-07-10', timeIn: '09:00', timeOut: '17:02', hours: 80.37 }
+        let entries = JSON.parse(localStorage.getItem('usl_pro_entries')) || [];
+        const hourlyRate = 40.0;
+        
+        const historicalInvoices = [
+            { ym: '2025-05', label: 'Mag 25', amount: 84.67 },
+            { ym: '2025-06', label: 'Giu 25', amount: 2888.00 },
+            { ym: '2025-07', label: 'Lug 25', amount: 3520.67 },
+            { ym: '2025-08', label: 'Ago 25', amount: 3860.67 },
+            { ym: '2025-09', label: 'Set 25', amount: 4454.67 },
+            { ym: '2025-10', label: 'Ott 25', amount: 3985.33 },
+            { ym: '2025-11', label: 'Nov 25', amount: 3562.67 },
+            { ym: '2025-12', label: 'Dic 25', amount: 3958.67 },
+            { ym: '2026-01', label: 'Gen 26', amount: 3536.00 },
+            { ym: '2026-02', label: 'Feb 26', amount: 4016.00 },
+            { ym: '2026-03', label: 'Mar 26', amount: 4847.33 },
+            { ym: '2026-04', label: 'Apr 26', amount: 4500.67 },
+            { ym: '2026-05', label: 'Mag 26', amount: 4403.33 },
+            { ym: '2026-06', label: 'Giu 26', amount: 3928.67 },
+            { ym: '2026-07', label: 'Lug 26', amount: 3214.67 }
         ];
 
-        let settings = JSON.parse(localStorage.getItem('usl_pro_settings')) || {
-            remainingFunds: 37398.0,
-            hourlyRate: 40.0,
-            workLat: null,
-            workLng: null,
-            radiusMeters: 150
-        };
-
-        // Active shift tracking state in session
-        let activeGpsShift = JSON.parse(localStorage.getItem('usl_active_gps_shift')) || null;
-        let gpsWatchId = null;
-        let isGpsTrackingActive = false;
-
-        // Initialize UI values
         document.getElementById('inputDate').valueAsDate = new Date();
-        const currentYearMonth = new Date().toISOString().slice(0, 7);
-        document.getElementById('filterMonth').value = currentYearMonth;
-        document.getElementById('settingRemaining').value = settings.remainingFunds;
-        document.getElementById('settingRate').value = settings.hourlyRate;
-        if (settings.workLat) document.getElementById('settingLat').value = settings.workLat;
-        if (settings.workLng) document.getElementById('settingLng').value = settings.workLng;
-        document.getElementById('settingRadius').value = settings.radiusMeters || 150;
-
-        let monthlyChartInstance = null;
-
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            renderMonthlyChart();
-        }
-
-        function openSettingsModal() {
-            document.getElementById('settingsModal').classList.remove('hidden');
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').classList.add('hidden');
-        }
-
-        function saveSettings() {
-            settings.remainingFunds = parseFloat(document.getElementById('settingRemaining').value) || 37398;
-            settings.hourlyRate = parseFloat(document.getElementById('settingRate').value) || 40;
-            const lat = parseFloat(document.getElementById('settingLat').value);
-            const lng = parseFloat(document.getElementById('settingLng').value);
-            settings.workLat = !isNaN(lat) ? lat : null;
-            settings.workLng = !isNaN(lng) ? lng : null;
-            settings.radiusMeters = parseFloat(document.getElementById('settingRadius').value) || 150;
-
-            localStorage.setItem('usl_pro_settings', JSON.stringify(settings));
-            closeSettingsModal();
-            renderAll();
-            showToast("Impostazioni salvate con successo!", "success");
-        }
-
-        function setCurrentAsWorkLocation() {
-            if (!navigator.geolocation) {
-                showToast("Geolocalizzazione non supportata dal browser.", "error");
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(position => {
-                settings.workLat = position.coords.latitude;
-                settings.workLng = position.coords.longitude;
-                document.getElementById('settingLat').value = settings.workLat;
-                document.getElementById('settingLng').value = settings.workLng;
-                localStorage.setItem('usl_pro_settings', JSON.stringify(settings));
-                showToast("Sede di lavoro impostata alla posizione attuale!", "success");
-                updateGpsUIState("Posizione sede registrata", false);
-            }, error => {
-                showToast("Impossibile rilevare la posizione GPS.", "error");
-            }, { enableHighAccuracy: true });
-        }
-
-        function toggleGpsTracking() {
-            if (!settings.workLat || !settings.workLng) {
-                showToast("Prima imposta le coordinate della sede di lavoro nelle impostazioni!", "error");
-                openSettingsModal();
-                return;
-            }
-
-            if (!isGpsTrackingActive) {
-                if (!navigator.geolocation) {
-                    showToast("Geolocalizzazione non supportata.", "error");
-                    return;
-                }
-                isGpsTrackingActive = true;
-                const btn = document.getElementById('toggleGpsTrackingBtn');
-                btn.innerHTML = `<i class="fa-solid fa-stop"></i><span>Ferma Radar GPS</span>`;
-                btn.className = "px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-md transition flex items-center space-x-2";
-                
-                showToast("Radar GPS attivato in background.", "success");
-
-                gpsWatchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleGpsError, {
-                    enableHighAccuracy: true,
-                    maximumAge: 10000,
-                    timeout: 20000
-                });
-            } else {
-                stopGpsTracking();
-                showToast("Radar GPS disattivato.", "success");
-            }
-        }
-
-        function stopGpsTracking() {
-            if (gpsWatchId !== null) {
-                navigator.geolocation.clearWatch(gpsWatchId);
-                gpsWatchId = null;
-            }
-            isGpsTrackingActive = false;
-            const btn = document.getElementById('toggleGpsTrackingBtn');
-            btn.innerHTML = `<i class="fa-solid fa-play"></i><span>Avvia Radar GPS</span>`;
-            btn.className = "px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md shadow-blue-500/25 transition flex items-center space-x-2";
-            updateGpsUIState("Radar in pausa", false);
-        }
-
-        function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Radius of earth in meters
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-            return R * c;
-        }
-
-        function handlePositionUpdate(position) {
-            const currentLat = position.coords.latitude;
-            const currentLng = position.coords.longitude;
-            const distance = calculateDistanceMeters(currentLat, currentLng, settings.workLat, settings.workLng);
-            const radius = settings.radiusMeters || 150;
-
-            const isAtWork = distance <= radius;
-
-            if (isAtWork) {
-                updateGpsUIState(`A lavoro (${Math.round(distance)}m dalla sede)`, true);
-                if (!activeGpsShift) {
-                    // Automatically clock-in
-                    const now = new Date();
-                    const dateStr = now.toISOString().slice(0, 10);
-                    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-                    
-                    activeGpsShift = {
-                        date: dateStr,
-                        timeIn: timeStr,
-                        timestampIn: now.getTime()
-                    };
-                    localStorage.setItem('usl_active_gps_shift', JSON.stringify(activeGpsShift));
-                    showToast(`Arrivo rilevato! Timbratura ingresso avviata (${timeStr}).`, "success");
-                }
-            } else {
-                updateGpsUIState(`Fuori sede (${Math.round(distance)}m di distanza)`, false);
-                if (activeGpsShift) {
-                    // Automatically clock-out when leaving workplace
-                    const now = new Date();
-                    const dateStr = now.toISOString().slice(0, 10);
-                    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-                    
-                    const [hIn, mIn] = activeGpsShift.timeIn.split(':').map(Number);
-                    const [hOut, mOut] = timeStr.split(':').map(Number);
-                    const diffHours = Math.max(0.1, ((hOut * 60 + mOut) - (hIn * 60 + mIn)) / 60);
-
-                    entries.push({
-                        id: Date.now(),
-                        date: activeGpsShift.date,
-                        timeIn: activeGpsShift.timeIn,
-                        timeOut: timeStr,
-                        hours: diffHours
-                    });
-
-                    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    activeGpsShift = null;
-                    localStorage.removeItem('usl_active_gps_shift');
-                    saveAndRefresh();
-                    showToast(`Uscita sede rilevata! Turno registrato automaticamente (${diffHours.toFixed(2)}h).`, "success");
-                }
-            }
-        }
-
-        function handleGpsError(err) {
-            console.warn("GPS error: " + err.message);
-            updateGpsUIState("Segnale GPS debole", false);
-        }
-
-        function updateGpsUIState(statusText, isWorking) {
-            const badge = document.getElementById('gpsBadge');
-            const iconContainer = document.getElementById('gpsStatusIcon');
-            const desc = document.getElementById('gpsDescText');
-
-            badge.innerText = statusText;
-            if (isWorking) {
-                badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 animate-pulse";
-                iconContainer.className = "w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-lg shadow-emerald-500/30 shrink-0 transition animate-pulse-subtle";
-                iconContainer.innerHTML = `<i class="fa-solid fa-briefcase"></i>`;
-                desc.innerText = "Sei attualmente all'interno dell'area della USL. Il turno risulta in corso.";
-            } else {
-                badge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300";
-                iconContainer.className = "w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xl shadow-inner shrink-0 transition";
-                iconContainer.innerHTML = `<i class="fa-solid fa-location-crosshairs"></i>`;
-                desc.innerText = activeGpsShift ? "Turno GPS attivo in attesa di uscita..." : "Radar geofencing attivo. Entra nell'area USL per registrare automaticamente l'ingresso.";
-            }
-        }
+        let chartInstance = null;
 
         function addEntry() {
             const date = document.getElementById('inputDate').value;
             const timeIn = document.getElementById('inputTimeIn').value;
             const timeOut = document.getElementById('inputTimeOut').value;
 
-            if (!date || !timeIn || !timeOut) {
-                showToast("Compila tutti i campi della timbratura!", "error");
-                return;
-            }
+            if(!date || !timeIn || !timeOut) return;
 
             const [hIn, mIn] = timeIn.split(':').map(Number);
             const [hOut, mOut] = timeOut.split(':').map(Number);
+            const diffHours = ((hOut * 60 + mOut) - (hIn * 60 + mIn)) / 60;
 
-            const minIn = hIn * 60 + mIn;
-            const minOut = hOut * 60 + mOut;
-
-            if (minOut <= minIn) {
-                showToast("L'orario di uscita deve essere successivo a quello di ingresso!", "error");
+            if (diffHours <= 0) {
+                alert("L'orario di uscita deve essere successivo a quello di ingresso.");
                 return;
             }
 
-            const diffHours = (minOut - minIn) / 60;
-
-            entries.push({
-                id: Date.now(),
-                date,
-                timeIn,
-                timeOut,
-                hours: diffHours
-            });
-
+            entries.push({ id: Date.now(), date, timeIn, timeOut, hours: diffHours });
             entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-            saveAndRefresh();
-            showToast("Turno registrato con successo!", "success");
+            localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
+            renderAll();
         }
 
         function deleteEntry(id) {
             entries = entries.filter(e => e.id !== id);
-            saveAndRefresh();
-            showToast("Turno eliminato.", "success");
-        }
-
-        function saveAndRefresh() {
             localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
             renderAll();
         }
 
         function renderAll() {
-            renderEntries();
-            calculateManual();
-            renderMonthlyChart();
-        }
-
-        function renderEntries() {
-            const selectedMonth = document.getElementById('filterMonth').value;
-            const tbody = document.getElementById('entriesTableBody');
-            tbody.innerHTML = '';
-
+            const currentMonthYM = new Date().toISOString().slice(0, 7);
             let totalMonthHours = 0;
 
-            entries.forEach(entry => {
-                const entryMonth = entry.date.slice(0, 7);
-                const inMonth = (entryMonth === selectedMonth);
-
-                if (inMonth) {
-                    totalMonthHours += entry.hours;
-                }
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition";
-                tr.innerHTML = `
-                    <td class="py-3 px-4 font-medium">${entry.date}</td>
-                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300"><span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">${entry.timeIn}</span></td>
-                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300"><span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">${entry.timeOut}</span></td>
-                    <td class="py-3 px-4 font-bold text-slate-800 dark:text-white">${entry.hours.toFixed(2)} h</td>
-                    <td class="py-3 px-4 text-right">
-                        <button onclick="deleteEntry(${entry.id})" class="text-slate-400 hover:text-rose-500 transition p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50" aria-label="Elimina turno">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            if (entries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">Nessun turno registrato</td></tr>`;
-            }
-
-            // Update KPIs
-            const monthAmount = totalMonthHours * settings.hourlyRate;
-            document.getElementById('kpiMonthHours').innerHTML = `${totalMonthHours.toFixed(2)} <span class="text-sm font-normal text-slate-500">h</span>`;
-            document.getElementById('kpiMonthAmount').innerText = `€ ${monthAmount.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('kpiRateDisplay').innerText = `Tariffa: ${settings.hourlyRate.toFixed(2)} €/h`;
-
-            document.getElementById('kpiRemainingFunds').innerText = `€ ${settings.remainingFunds.toLocaleString('it-IT')}`;
-            
-            const avgInvoice = 3650.80;
-            const monthsLeft = settings.remainingFunds / avgInvoice;
-            document.getElementById('kpiMonthsLeft').innerHTML = `~${monthsLeft.toFixed(1)} <span class="text-sm font-normal text-slate-500">mesi</span>`;
-        }
-
-        function renderMonthlyChart() {
-            const monthlyData = {};
+            const listContainer = document.getElementById('entriesList');
+            listContainer.innerHTML = '';
 
             entries.forEach(e => {
-                if (e.date && e.date.length >= 7) {
-                    const ym = e.date.slice(0, 7);
-                    if (!monthlyData[ym]) {
-                        monthlyData[ym] = 0;
-                    }
-                    monthlyData[ym] += e.hours;
+                if (e.date.startsWith(currentMonthYM)) {
+                    totalMonthHours += e.hours;
                 }
             });
 
-            const monthsKeys = Object.keys(monthlyData).sort();
-            const labels = monthsKeys.map(ym => {
-                const [y, m] = ym.split('-');
-                const dateObj = new Date(y, m - 1, 1);
-                return dateObj.toLocaleDateString('it-IT', { month: 'short', year: '2-digit' });
-            });
-
-            const hoursData = monthsKeys.map(ym => monthlyData[ym] || 0);
-
-            const isDark = document.documentElement.classList.contains('dark');
-            const gridColor = isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)';
-            const textColor = isDark ? '#94a3b8' : '#64748b';
-
-            const canvas = document.getElementById('monthlyTrendChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            
-            if (monthlyChartInstance) {
-                monthlyChartInstance.destroy();
+            const recentEntries = entries.slice(0, 5);
+            if (recentEntries.length === 0) {
+                listContainer.innerHTML = `<p class="text-slate-400 text-center py-2">Nessun turno registrato</p>`;
+            } else {
+                recentEntries.forEach(e => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800";
+                    div.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-slate-800 dark:text-slate-200">${e.date} (${e.timeIn} - ${e.timeOut})</p>
+                            <p class="text-xs text-slate-500">${e.hours.toFixed(2)} ore</p>
+                        </div>
+                        <button onclick="deleteEntry(${e.id})" class="text-rose-500 p-2"><i class="fa-solid fa-trash-can"></i></button>
+                    `;
+                    listContainer.appendChild(div);
+                });
             }
 
-            monthlyChartInstance = new Chart(ctx, {
+            const monthAmount = totalMonthHours * hourlyRate;
+            document.getElementById('kpiMonthHours').innerHTML = `${totalMonthHours.toFixed(2)} <span class="text-xs font-normal">h</span>`;
+            document.getElementById('kpiMonthAmount').innerText = `€ ${monthAmount.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            renderChart();
+        }
+
+        function renderChart() {
+            const filter = document.getElementById('chartFilter').value;
+            const currentMonthYM = new Date().toISOString().slice(0, 7);
+
+            let mapAmounts = {};
+            historicalInvoices.forEach(h => { mapAmounts[h.ym] = h.amount; });
+
+            entries.forEach(e => {
+                const ym = e.date.slice(0, 7);
+                if (!mapAmounts[ym]) mapAmounts[ym] = 0;
+                mapAmounts[ym] += e.hours * hourlyRate;
+            });
+
+            let allYMs = Object.keys(mapAmounts).sort();
+            if (filter === 'current') {
+                allYMs = allYMs.filter(ym => ym === currentMonthYM);
+            }
+
+            const labels = allYMs.map(ym => {
+                const [y, m] = ym.split('-');
+                return new Date(y, m - 1, 1).toLocaleDateString('it-IT', { month: 'short', year: '2-digit' });
+            });
+            const dataValues = allYMs.map(ym => mapAmounts[ym]);
+
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [
-                        {
-                            label: 'Ore Lavorate',
-                            data: hoursData,
-                            backgroundColor: 'rgba(37, 99, 235, 0.85)',
-                            borderColor: 'rgb(37, 99, 235)',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            yAxisID: 'y'
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Fatturato (€)',
+                        data: dataValues,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: textColor,
-                                font: { family: 'Plus Jakarta Sans', size: 12 }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let h = context.raw;
-                                    let eur = h * settings.hourlyRate;
-                                    return [` Ore: ${h.toFixed(2)} h`, ` Compenso: € ${eur.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`];
-                                }
-                            }
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 11 } }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: gridColor },
-                            ticks: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 12 } }
-                        }
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } } }
                     }
                 }
             });
         }
 
-        function calculateManual() {
-            let val = document.getElementById('manualHoursInput').value.trim();
-            let hours = 0;
-            if (val.includes(':')) {
-                let parts = val.split(':');
-                hours = parseFloat(parts[0]) + (parseFloat(parts[1]) / 60);
-            } else {
-                hours = parseFloat(val.replace(',', '.')) || 0;
-            }
-            let rate = parseFloat(document.getElementById('manualRateInput').value) || settings.hourlyRate;
-            let total = hours * rate;
-            document.getElementById('manualResultDisplay').innerText = `€ ${total.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        }
-
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({entries, settings}, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "usl_tracker_backup.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast("Backup scaricato con successo!", "success");
-        }
-
-        function clearAllData() {
-            if (confirm("Vuoi davvero azzerare tutti i turni registrati?")) {
-                entries = [];
-                saveAndRefresh();
-                showToast("Tutti i dati sono stati azzerati.", "error");
-            }
-        }
-
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-xl text-white text-sm font-semibold flex items-center space-x-2 transition transform translate-y-0 ${type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`;
-            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i><span>${message}</span>`;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            renderAll();
-            setTimeout(renderMonthlyChart, 100);
-            if (activeGpsShift) {
-                updateGpsUIState("In turno (da GPS)", true);
-            }
-        });
-        window.addEventListener('resize', () => {
-            if (monthlyChartInstance) {
-                monthlyChartInstance.resize();
-            }
-        });
         renderAll();
     </script>
 </body>
