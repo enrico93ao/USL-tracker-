@@ -68,7 +68,7 @@
             </div>
         </div>
 
-        <!-- Entry Form (Ingresso/Uscita + Inserimento Totale Ore Mensili) -->
+        <!-- Entry Form -->
         <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
             <div class="flex items-center justify-between">
                 <h3 class="font-bold text-slate-800 dark:text-white text-sm">Registrazione Turni / Ore</h3>
@@ -80,7 +80,6 @@
                 <input type="date" id="inputDate" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
             </div>
 
-            <!-- Pulsanti Ingresso / Uscita Rapidi -->
             <div class="grid grid-cols-2 gap-4">
                 <button onclick="recordIn()" id="btnIngresso" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-right-to-bracket"></i>
@@ -98,30 +97,34 @@
                 <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
             </div>
 
-            <!-- Inserimento diretto totale ore (es. mensile o blocco) -->
+            <!-- Inserimento diretto ore/minuti -->
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">Totale Ore</label>
-                    <input type="number" step="0.5" id="inputTotalHours" placeholder="Es. 80" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Ore</label>
+                        <input type="number" id="inputDirectHours" min="0" placeholder="0" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Minuti</label>
+                        <input type="number" id="inputDirectMinutes" min="0" max="59" placeholder="0" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 text-sm focus:outline-none">
+                    </div>
                 </div>
                 <div class="flex items-end">
                     <button onclick="addDirectHours()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-plus"></i>
-                        <span>Aggiungi Ore</span>
+                        <span>Aggiungi</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Storico Registrazioni con Filtro Mese -->
+        <!-- Storico Registrazioni -->
         <div class="glass-card p-5 rounded-2xl shadow-sm space-y-4">
             <div class="flex items-center justify-between">
                 <h3 class="font-bold text-slate-800 dark:text-white text-sm">Registrazioni Mese</h3>
                 <input type="month" id="filterMonth" onchange="renderAll()" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 text-xs font-semibold focus:outline-none">
             </div>
-            <div id="entriesList" class="space-y-2 text-sm max-h-60 overflow-y-auto pr-1">
-                <!-- Popolato via JS -->
-            </div>
+            <div id="entriesList" class="space-y-2 text-sm max-h-60 overflow-y-auto pr-1"></div>
         </div>
     </main>
 
@@ -169,7 +172,6 @@
             const date = document.getElementById('inputDate').value;
             const now = new Date();
             const timeIn = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            
             activeShift = { date, timeIn };
             localStorage.setItem('usl_active_shift', JSON.stringify(activeShift));
             updateShiftUI();
@@ -179,20 +181,15 @@
             if (!activeShift) return;
             const now = new Date();
             const timeOut = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            
             const [hIn, mIn] = activeShift.timeIn.split(':').map(Number);
             const [hOut, mOut] = timeOut.split(':').map(Number);
             const diffHours = ((hOut * 60 + mOut) - (hIn * 60 + mIn)) / 60;
 
-            if (diffHours <= 0) {
-                alert("L'orario di uscita non può essere precedente o uguale a quello di ingresso.");
-                return;
-            }
+            if (diffHours <= 0) { alert("Orario non valido."); return; }
 
             entries.push({ id: Date.now(), date: activeShift.date, label: `${activeShift.timeIn} - ${timeOut}`, hours: diffHours });
             entries.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
-
             activeShift = null;
             localStorage.removeItem('usl_active_shift');
             updateShiftUI();
@@ -201,17 +198,17 @@
 
         function addDirectHours() {
             const date = document.getElementById('inputDate').value;
-            const hoursVal = parseFloat(document.getElementById('inputTotalHours').value);
+            const hours = parseInt(document.getElementById('inputDirectHours').value) || 0;
+            const minutes = parseInt(document.getElementById('inputDirectMinutes').value) || 0;
+            const totalHours = hours + (minutes / 60);
 
-            if (!date || isNaN(hoursVal) || hoursVal <= 0) {
-                alert("Inserisci una data valida e un numero di ore maggiore di zero.");
-                return;
-            }
+            if (!date || totalHours <= 0) { alert("Inserisci ore e minuti validi."); return; }
 
-            entries.push({ id: Date.now(), date, label: `Blocco Ore`, hours: hoursVal });
+            entries.push({ id: Date.now(), date, label: `Blocco Ore`, hours: totalHours });
             entries.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('usl_pro_entries', JSON.stringify(entries));
-            document.getElementById('inputTotalHours').value = '';
+            document.getElementById('inputDirectHours').value = '';
+            document.getElementById('inputDirectMinutes').value = '';
             renderAll();
         }
 
@@ -223,101 +220,57 @@
 
         function renderAll() {
             const selectedMonth = document.getElementById('filterMonth').value;
-            let totalMonthHours = 0;
-
             const listContainer = document.getElementById('entriesList');
             listContainer.innerHTML = '';
-
-            let filteredEntries = entries.filter(e => e.date.startsWith(selectedMonth));
+            let totalMonthHours = 0;
 
             entries.forEach(e => {
-                if (e.date.startsWith(new Date().toISOString().slice(0, 7))) {
-                    totalMonthHours += e.hours;
-                }
+                if (e.date.startsWith(new Date().toISOString().slice(0, 7))) totalMonthHours += e.hours;
             });
 
+            let filteredEntries = entries.filter(e => e.date.startsWith(selectedMonth));
             let totalUserBilled = entries.reduce((acc, curr) => acc + (curr.hours * hourlyRate), 0);
             let remaining = initialFunds - totalUserBilled;
 
             if (filteredEntries.length === 0) {
-                listContainer.innerHTML = `<p class="text-slate-400 text-center py-3 text-xs">Nessuna registrazione per il mese selezionato</p>`;
+                listContainer.innerHTML = `<p class="text-slate-400 text-center py-3 text-xs">Nessuna registrazione</p>`;
             } else {
                 filteredEntries.forEach(e => {
                     const div = document.createElement('div');
                     div.className = "flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800";
-                    div.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-slate-800 dark:text-slate-200">${e.date} &bull; <span class="text-blue-600">${e.label}</span></p>
-                            <p class="text-xs text-slate-500">${e.hours.toFixed(2)} ore (€ ${(e.hours * hourlyRate).toFixed(2)})</p>
-                        </div>
-                        <button onclick="deleteEntry(${e.id})" class="text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>
-                    `;
+                    div.innerHTML = `<div><p class="font-semibold text-slate-800 dark:text-slate-200">${e.date} &bull; <span class="text-blue-600">${e.label}</span></p><p class="text-xs text-slate-500">${e.hours.toFixed(2)} ore (€ ${(e.hours * hourlyRate).toFixed(2)})</p></div><button onclick="deleteEntry(${e.id})" class="text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>`;
                     listContainer.appendChild(div);
                 });
             }
 
-            const monthAmount = totalMonthHours * hourlyRate;
             document.getElementById('kpiMonthHours').innerHTML = `${totalMonthHours.toFixed(2)}`;
-            document.getElementById('kpiMonthAmount').innerText = `€ ${monthAmount.toLocaleString('it-IT', {maximumFractionDigits: 0})}`;
+            document.getElementById('kpiMonthAmount').innerText = `€ ${(totalMonthHours * hourlyRate).toLocaleString('it-IT', {maximumFractionDigits: 0})}`;
             document.getElementById('kpiRemainingFunds').innerText = `€ ${remaining.toLocaleString('it-IT', {maximumFractionDigits: 0})}`;
-
             renderChart();
         }
 
         function renderChart() {
             const filter = document.getElementById('chartFilter').value;
             const currentMonthYM = new Date().toISOString().slice(0, 7);
-
             let mapAmounts = {};
             historicalInvoices.forEach(h => { mapAmounts[h.ym] = h.amount; });
-
-            entries.forEach(e => {
-                const ym = e.date.slice(0, 7);
-                if (!mapAmounts[ym]) mapAmounts[ym] = 0;
-                mapAmounts[ym] += e.hours * hourlyRate;
-            });
-
+            entries.forEach(e => { const ym = e.date.slice(0, 7); if (!mapAmounts[ym]) mapAmounts[ym] = 0; mapAmounts[ym] += e.hours * hourlyRate; });
+            
             let allYMs = Object.keys(mapAmounts).sort();
-            if (filter === 'current') {
-                allYMs = allYMs.filter(ym => ym === currentMonthYM);
-            }
-
-            const labels = allYMs.map(ym => {
-                const [y, m] = ym.split('-');
-                return new Date(y, m - 1, 1).toLocaleDateString('it-IT', { month: 'short', year: '2-digit' });
-            });
+            if (filter === 'current') allYMs = allYMs.filter(ym => ym === currentMonthYM);
+            
+            const labels = allYMs.map(ym => { const [y, m] = ym.split('-'); return new Date(y, m - 1, 1).toLocaleDateString('it-IT', { month: 'short', year: '2-digit' }); });
             const dataValues = allYMs.map(ym => mapAmounts[ym]);
 
             const ctx = document.getElementById('monthlyChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Fatturato (€)',
-                        data: dataValues,
-                        backgroundColor: 'rgba(37, 99, 235, 0.85)',
-                        borderColor: 'rgb(37, 99, 235)',
-                        borderWidth: 1,
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                        y: { beginAtZero: true, ticks: { font: { size: 10 } } }
-                    }
-                }
+                data: { labels: labels, datasets: [{ data: dataValues, backgroundColor: 'rgba(37, 99, 235, 0.85)', borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
             });
         }
-
-        updateShiftUI();
-        renderAll();
+        updateShiftUI(); renderAll();
     </script>
 </body>
 </html>
